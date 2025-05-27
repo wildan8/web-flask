@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}WebRTC Live Stream dengan Bootstrap{% endblock %}
+
+{% block head %}
+  {{ super() }}
+  <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous"> -->
+  <style>
+    /* Custom CSS untuk sedikit penyesuaian */
+    body {
+      background-color: #f8f9fa; /* Warna latar belakang terang */
+    }
+    .video-container {
+      position: relative;
+      width: 100%;
+      max-width: 720px; /* Batasi lebar maksimal video */
+      margin: 20px auto;
+      border-radius: 12px;
+      overflow: hidden; /* Pastikan video tidak keluar dari border-radius */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Efek bayangan */
+      background-color: #000; /* Latar belakang hitam untuk video area */
+    }
+    #webcamVideo {
+      width: 100%;
+      height: auto;
+      display: block; /* Menghilangkan spasi ekstra di bawah video */
+    }
+    .status-text {
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4 text-primary">WebRTC Live Stream dengan Deteksi Senyum</h1>
+
+    <div class="video-container">
+        <video id="webcamVideo" autoplay playsinline></video>
+    </div>
+
+    <div class="text-center my-4">
+        <button id="startButton" class="btn btn-success btn-lg">
+            <i class="bi bi-camera-fill me-2"></i> Mulai Deteksi Kamera
+        </button>
+    </div>
+
+    <div class="text-center">
+        <p class="status-text">Status: <span id="status" class="badge bg-secondary">Belum Terhubung</span></p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.min.js"></script>
+
+<script>
+    const videoElement = document.getElementById('webcamVideo');
+    const startButton = document.getElementById('startButton');
+    const statusSpan = document.getElementById('status');
+
+    let localStream;
+    let peerConnection;
+    let socket;
+
+    // --- Inisialisasi Socket.IO ---
+    socket = io.connect(window.location.origin + '/webrtc');
+
+    socket.on('connect', () => {
+        console.log('Connected to Socket.IO server');
+        statusSpan.textContent = 'Terhubung ke server, Menunggu Kamera...';
+        statusSpan.classList.remove('bg-secondary');
+        statusSpan.classList.add('bg-info');
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Disconnected from Socket.IO server');
+        statusSpan.textContent = 'Terputus dari server';
+        statusSpan.classList.remove('bg-info', 'bg-success', 'bg-warning');
+        statusSpan.classList.add('bg-danger');
+    });
+
+    // --- Signaling: Menerima Answer dari Server ---
+    socket.on('answer', async (message) => {
+        console.log('Received answer from server:', message);
+        const remoteDesc = new RTCSessionDescription(message);
+        try {
+            await peerConnection.setRemoteDescription(remoteDesc);
+            statusSpan.textContent = 'Stream Aktif, Deteksi Berjalan!';
+            statusSpan.classList.remove('bg-info');
+            statusSpan.classList.add('bg-success');
+        } catch (e) {
+            console.error('Error setting remote description from answer:', e);
+            statusSpan.textContent = 'Gagal mengatur remote description.';
+            statusSpan.classList.remove('bg-info', 'bg-success');
+            statusSpan.classList.add('bg-danger');
+        }
+    });
+
+    // --- Signaling: Menerima ICE Candidates dari Server ---
+    socket.on('ice_candidate', async (message) => {
+        console.log('Received ICE candidate from server:', message);
+        try {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(message));
+        } catch (e) {
+            console.error('Error adding received ICE candidate:', e);
+        }
+    });
+
+    // --- Fungsi untuk memulai WebRTC ---
+    startButton.onclick = async () => {
+        statusSpan.textContent = 'Meminta akses kamera...';
+        statusSpan.classList.remove('bg-info');
+        statusSpan.classList.add('bg-warning'); // Status kuning saat meminta izin
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            videoElement.srcObject = localStream;
+            statusSpan.textContent = 'Akses kamera berhasil, Menyiapkan koneksi...';
+            statusSpan.classList.remove('bg-warning');
+            statusSpan.classList.add('bg-info');
+            await startWebRTCConnection();
+        } catch (e) {
+            console.error('Error accessing camera:', e);
+            statusSpan.textContent = `Error: ${e.name}`;
+            statusSpan.classList.remove('bg-warning', 'bg-info');
+            statusSpan.classList.add('bg-danger');
+            alert('Tidak dapat mengakses kamera. Pastikan Anda memberikan izin.');
+        }
+    };
+
+    async function startWebRTCConnection() {
+        const rtcConfig = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+            ]
+        };
+        peerConnection = new RTCPeerConnection(rtcConfig);
+
+        localStream.getTracks().forEach(track => {
+            peerConnection.addTrack(track, localStream);
+            console.log('Added local track:', track.kind);
+        });
+
+        peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                console.log('Sending ICE candidate from browser:', event.candidate);
+                socket.emit('ice_candidate', event.candidate.toJSON(), '/webrtc');
+            }
+        };
+
+        peerConnection.ontrack = (event) => {
+            console.log('Received remote track from server:', event.track.kind);
+            if (videoElement.srcObject !== event.streams[0]) {
+                videoElement.srcObject = event.streams[0];
+                console.log('Received remote stream from server and set to video element.');
+            }
+        };
+
+        peerConnection.onconnectionstatechange = () => {
+            console.log('WebRTC Connection state:', peerConnection.connectionState);
+            statusSpan.textContent = `Koneksi WebRTC ${peerConnection.connectionState}`;
+            // Anda bisa menambahkan logika perubahan badge warna di sini juga
+            if (peerConnection.connectionState === 'connected') {
+                statusSpan.classList.remove('bg-info', 'bg-warning', 'bg-danger');
+                statusSpan.classList.add('bg-success');
+            } else if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
+                statusSpan.classList.remove('bg-info', 'bg-success', 'bg-warning');
+                statusSpan.classList.add('bg-danger');
+            }
+        };
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        console.log('Sending offer to server:', offer);
+        socket.emit('offer', {
+            sdp: peerConnection.localDescription.sdp,
+            type: peerConnection.localDescription.type
+        }, '/webrtc');
+    }
+
+    window.onbeforeunload = () => {
+        if (peerConnection) {
+            peerConnection.close();
+        }
+        if (socket) {
+            socket.disconnect();
+        }
+    };
+</script>
+{% endblock %}

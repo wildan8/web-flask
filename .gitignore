@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+.Python/
+
+# Distribution / packaging
+.Python
+env/
+venv/
+lib/
+include/
+bin/
+share/
+local/
+
+# IDE files
+.vscode/        # Untuk Visual Studio Code
+.idea/          # Untuk PyCharm atau IntelliJ IDEA
+*.sublime-project
+*.sublime-workspace
+
+# OS generated files
+.DS_Store       # macOS
+Thumbs.db       # Windows
+ehthumbs.db     # Windows
+.Spotlight-V100 # macOS
+.Trashes        # macOS
+._* # macOS (AppleDouble files)
+
+# Flask-specific
+instance/       # Direktori instance Flask (untuk config/database lokal)
+.flaskenv       # File environment variable Flask
+.env            # File environment variable umum
+
+# Database files
+*.sqlite3
+*.db
+*.bak
+
+# Log files
+*.log
+
+# Uploaded files / Media
+uploads/        # Jika aplikasi Anda mengizinkan upload file
+
+# Testing
+.pytest_cache/
+.coverage
+
+# Other temporary files
+tmp/
