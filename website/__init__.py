@@ -4,10 +4,14 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'secret'
 
-    from .views import views
+    from .views import views, socketio
     from .auth import auth
 
     app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/auth/')
+    socketio.init_app(app)
 
     return app
+
+from .views import socketio
+__all__ = ['create_app', 'socketio']

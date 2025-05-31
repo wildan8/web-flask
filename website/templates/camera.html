@@ -28,6 +28,7 @@
     <div id="result" class="mt-3"></div>
     <img id="result-img" style="max-width:100%; margin-top:1em;"/>
 </div>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 const video = document.getElementById('video');
 const startCamBtn = document.getElementById('start-cam');
@@ -58,6 +59,7 @@ let currentBrightness = 1;
 let minBrightness = 0;
 let maxBrightness = 2;
 let brightnessStep = 1;
+const socket = io();
 
 // List cameras
 async function listCameras() {
@@ -171,8 +173,14 @@ function changeBrightness(delta) {
 }
 
 // Event listeners
-startCamBtn.onclick = () => startCamera(currentDeviceId);
-stopCamBtn.onclick = stopCamera;
+startCamBtn.onclick = () => {
+    startCamera(currentDeviceId);
+    startRealtime();
+};
+stopCamBtn.onclick = () => {
+    stopCamera();
+    stopRealtime();
+};
 cameraSelect.onchange = () => {
     currentDeviceId = cameraSelect.value;
     startCamera(currentDeviceId);
@@ -189,110 +197,40 @@ listCameras().then(() => {
     }
 });
 
-captureBtn.onclick = () => {
-    // Buat offscreen canvas dengan resolusi tinggi
-    const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = 1280;
-    offscreenCanvas.height = 720;
-    offscreenCanvas.getContext('2d').drawImage(video, 0, 0, 1280, 720);
-    imageData = offscreenCanvas.toDataURL('image/png');
-    // Tampilkan preview kecil di canvas utama
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    // Atur brightness awal
-    adjustCanvasBrightness(canvas, currentBrightness);
-    canvas.style.display = 'block';
-    sendBtn.style.display = 'inline-block';
-    // Tampilkan slider brightness
-    let canvasBrightness = 1;
-    const canvasBrightnessSlider = document.createElement('input');
-    canvasBrightnessSlider.type = 'range';
-    canvasBrightnessSlider.min = '0.5';
-    canvasBrightnessSlider.max = '2';
-    canvasBrightnessSlider.step = '0.05';
-    canvasBrightnessSlider.value = '1';
-    canvasBrightnessSlider.style.display = 'block';
-    canvasBrightnessSlider.className = 'form-range mt-2';
-    canvas.parentNode.insertBefore(canvasBrightnessSlider, canvas.nextSibling);
-    const canvasBrightnessLabel = document.createElement('span');
-    canvasBrightnessLabel.textContent = 'Brightness: 1.0';
-    canvasBrightnessLabel.style.display = 'inline-block';
-    canvas.parentNode.insertBefore(canvasBrightnessLabel, canvasBrightnessSlider.nextSibling);
+// Fungsi untuk mengirim frame ke server
+function sendFrame() {
+    if (video.videoWidth === 0 || video.videoHeight === 0) return;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = video.videoWidth;
+    offscreen.height = video.videoHeight;
+    offscreen.getContext('2d').drawImage(video, 0, 0);
+    const dataURL = offscreen.toDataURL('image/jpeg');
+    socket.emit('frame', { image: dataURL });
+}
 
-    canvasBrightnessSlider.oninput = function() {
-        canvasBrightness = parseFloat(this.value);
-        canvasBrightnessLabel.textContent = `Brightness: ${canvasBrightness.toFixed(2)}`;
-        // Redraw image with new brightness
-        const img = new window.Image();
-        img.onload = function() {
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            adjustCanvasBrightness(canvas, canvasBrightness);
-        };
-        img.src = imageData;
-    };
-};
+socket.on('result', data => {
+    // Tampilkan hasil gambar dari server
+    resultImg.src = data.image;
+});
 
-// Handler untuk upload file
-uploadInput.onchange = function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-        imageData = evt.target.result;
-        // Tampilkan preview kecil di canvas utama
-        const img = new window.Image();
-        img.onload = function() {
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            // Atur brightness awal
-            adjustCanvasBrightness(canvas, currentBrightness);
-            canvas.style.display = 'block';
-            sendBtn.style.display = 'inline-block';
-            // Tampilkan slider brightness
-            let canvasBrightness = 1;
-            const canvasBrightnessSlider = document.createElement('input');
-            canvasBrightnessSlider.type = 'range';
-            canvasBrightnessSlider.min = '0.5';
-            canvasBrightnessSlider.max = '2';
-            canvasBrightnessSlider.step = '0.05';
-            canvasBrightnessSlider.value = '1';
-            canvasBrightnessSlider.style.display = 'block';
-            canvasBrightnessSlider.className = 'form-range mt-2';
-            canvas.parentNode.insertBefore(canvasBrightnessSlider, canvas.nextSibling);
-            const canvasBrightnessLabel = document.createElement('span');
-            canvasBrightnessLabel.textContent = 'Brightness: 1.0';
-            canvasBrightnessLabel.style.display = 'inline-block';
-            canvas.parentNode.insertBefore(canvasBrightnessLabel, canvasBrightnessSlider.nextSibling);
+// Kirim frame secara periodik (misal 10 fps)
+let sending = false;
+function startRealtime() {
+    sending = true;
+    function loop() {
+        if (sending) {
+            sendFrame();
+            setTimeout(loop, 100); // 10 fps
+        }
+    }
+    loop();
+}
+function stopRealtime() { sending = false; }
 
-            canvasBrightnessSlider.oninput = function() {
-                canvasBrightness = parseFloat(this.value);
-                canvasBrightnessLabel.textContent = `Brightness: ${canvasBrightness.toFixed(2)}`;
-                // Redraw image with new brightness
-                const img = new window.Image();
-                img.onload = function() {
-                    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                    adjustCanvasBrightness(canvas, canvasBrightness);
-                };
-                img.src = imageData;
-            };
-        };
-        img.src = imageData;
-    };
-    reader.readAsDataURL(file);
-};
-
-sendBtn.onclick = async () => {
-    resultDiv.innerHTML = 'Processing...';
-    const response = await fetch('/process_image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageData })
-    });
-    const result = await response.json();
-    resultDiv.innerHTML = 'Result: ' + result.result;
-    resultImg.src = result.image;
-};
+// Sembunyikan tombol capture/send dan canvas
+captureBtn.style.display = 'none';
+sendBtn.style.display = 'none';
+canvas.style.display = 'none';
 
 // Fungsi untuk mengatur brightness pada canvas setelah capture
 function adjustCanvasBrightness(canvas, value) {
