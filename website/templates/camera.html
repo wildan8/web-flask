@@ -1,37 +1,99 @@
 {% extends "base.html" %}
-
 {% block title %}Camera{% endblock %}
-
 {% block content %}
 <div class="container text-center mt-5">
-    <h2>Camera Capture</h2>
-    <div class="mb-2">
-        <label for="camera-select">Camera:</label>
-        <select id="camera-select" class="form-select" style="display:inline-block; width:auto;"></select>
-        <button id="zoom-in" class="btn btn-outline-primary btn-sm mx-1">+</button>
-        <button id="zoom-out" class="btn btn-outline-primary btn-sm">-</button>
-        <span id="zoom-level" class="mx-2"></span>
-        <!-- Brightness controls -->
-        <button id="brightness-up" class="btn btn-outline-warning btn-sm mx-1">Brightness +</button>
-        <button id="brightness-down" class="btn btn-outline-warning btn-sm">Brightness -</button>
-        <span id="brightness-level" class="mx-2"></span>
+    <h2>Deteksi</h2>
+
+    <!-- Main Buttons -->
+    <div class="mb-4">
+        <button id="open-camera-popup" class="btn btn-primary btn-lg mx-2" style="padding: 2rem 4rem; font-size: 1.8rem;">Camera</button>
+        <button id="open-upload-popup" class="btn btn-secondary btn-lg mx-2" style="padding: 2rem 4rem; font-size: 1.8rem;">Upload</button>
     </div>
-    <video id="video" width="700" height="394" autoplay playsinline class="border rounded"></video>
-    <button id="start-cam" class="btn btn-secondary mt-2">Nyalakan Kamera</button>
-    <button id="stop-cam" class="btn btn-danger mt-2" style="display:none;">Matikan Kamera</button>
-    <canvas id="canvas" width="700" height="394" style="display:none;"></canvas>
-    <div class="mt-3">
-        <button id="capture" class="btn btn-primary">Capture Photo</button>
-        <button id="send" class="btn btn-success" style="display:none;">Send to Server</button>
+
+    <!-- Camera Modal -->
+    <div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cameraModalLabel">Camera</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="camera-select" class="form-label">Pilih Kamera:</label>
+                        <select id="camera-select" class="form-select"></select>
+                    </div>
+                    <!-- Container untuk video dan canvas - tampil bergantian -->
+                    <div class="text-center mb-3" style="width: 100%; max-width: 600px; margin: 0 auto; height: auto;">
+                        <video id="video" width="700" height="394" autoplay playsinline class="img-fluid border rounded shadow-sm" style="display: block; width: 100%; height: auto;"></video>
+                        <canvas id="canvas" width="700" height="394" class="img-fluid border rounded shadow-sm" style="display: none; width: 100%; height: auto;"></canvas>
+                    </div>
+                    <div class="d-grid gap-2 d-md-block text-center">
+                        <button id="capture" class="btn btn-primary mt-3">Capture Photo</button>
+                        <button id="send" class="btn btn-success mt-3" style="display:none;">Kirim ke Server</button>
+                        <!-- Loading indicator for camera modal -->
+                        <div id="camera-loading" class="d-flex align-items-center justify-content-center mt-3" style="display: none !important;">
+                            <strong>Mengirim...</strong>
+                            <div class="spinner-border ms-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <input type="file" id="upload" accept="image/*" class="form-control mt-3" style="max-width:300px; margin:auto;">
-    <div id="result" class="mt-3"></div>
-    <img id="result-img" style="max-width:100%; margin-top:1em;"/>
+
+    <!-- Upload Modal -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel">Unggah Gambar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="file" id="upload" accept="image/*" class="form-control mx-auto mb-3" style="max-width:300px;">
+                    <canvas id="canvas-upload-preview" width="700" height="394" style="display: none;" class="img-fluid border rounded mx-auto d-block my-3"></canvas>
+                    <div class="text-center">
+                        <button id="send-upload" class="btn btn-success mt-3" style="display:none;">Kirim ke Server</button>
+                        <!-- Loading indicator for upload modal -->
+                        <div id="upload-loading" class="d-flex align-items-center justify-content-center mt-3" style="display: none !important;">
+                            <strong>Mengirim...</strong>
+                            <div class="spinner-border ms-2" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Loading Indicator (only shows when processing) -->
+    <div id="loading-indicator" class="alert alert-info mt-4 d-flex align-items-center" role="alert" style="display: none !important;">
+        <strong>Memproses gambar...</strong>
+        <div class="spinner-border ms-2" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Result Display -->
+     <div id= "result-component" class="d-flex border rounded shadow-sm mt-4 mx-auto" style="max-width: 1000px;">
+        <div class="p-3" style="max-width: 50%;">
+            <img id="result-img" class="img-fluid mt-3 border rounded shadow-sm" style="display: none; max-width: 480px; height: auto;" />
+        </div>
+        <div class="p-3">
+            <div id="result" class="mt-4 alert alert-success" role="alert" style="display: none;"></div>
+            <div id="result-detail" class="d-flex align-items-center">
+                <span id="result-detail-text" class="mt-4 alert alert-success" role="alert" style="display: none;"></span>
+            </div>
+        </div>
+     </div>
 </div>
+
 <script>
 const video = document.getElementById('video');
-const startCamBtn = document.getElementById('start-cam');
-const stopCamBtn = document.getElementById('stop-cam');
 const canvas = document.getElementById('canvas');
 const captureBtn = document.getElementById('capture');
 const sendBtn = document.getElementById('send');
@@ -39,27 +101,142 @@ const uploadInput = document.getElementById('upload');
 const resultDiv = document.getElementById('result');
 const resultImg = document.getElementById('result-img');
 const cameraSelect = document.getElementById('camera-select');
-const zoomInBtn = document.getElementById('zoom-in');
-const zoomOutBtn = document.getElementById('zoom-out');
-const zoomLevelSpan = document.getElementById('zoom-level');
-// Brightness controls
-const brightnessUpBtn = document.getElementById('brightness-up');
-const brightnessDownBtn = document.getElementById('brightness-down');
-const brightnessLevelSpan = document.getElementById('brightness-level');
+const openCameraPopupBtn = document.getElementById('open-camera-popup');
+const openUploadPopupBtn = document.getElementById('open-upload-popup');
+const canvasUploadPreview = document.getElementById('canvas-upload-preview');
+const sendUploadBtn = document.getElementById('send-upload');
+const loadingIndicator = document.getElementById('loading-indicator');
+const cameraLoading = document.getElementById('camera-loading');
+const uploadLoading = document.getElementById('upload-loading');
+
 let imageData = null;
 let stream = null;
 let currentDeviceId = null;
-let currentZoom = 1;
-let maxZoom = 3;
-let minZoom = 1;
-let zoomStep = 0.1;
-let videoTrack = null;
-let currentBrightness = 1;
-let minBrightness = 0;
-let maxBrightness = 2;
-let brightnessStep = 1;
 
-// List cameras
+// Reset functions
+function resetCameraModal() {
+    // Stop and clear video stream
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    video.srcObject = null;
+    
+    // Clear canvas and ensure proper visibility
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.style.display = 'none';
+    video.style.display = 'block';
+    
+    // Reset buttons
+    captureBtn.textContent = 'Capture Photo';
+    sendBtn.style.display = 'none';
+    
+    // Hide loading
+    cameraLoading.style.setProperty('display', 'none', 'important');
+    
+    // Clear image data
+    imageData = null;
+}
+
+function resetUploadModal() {
+    canvasUploadPreview.getContext('2d').clearRect(0, 0, canvasUploadPreview.width, canvasUploadPreview.height);
+    canvasUploadPreview.style.display = 'none';
+    sendUploadBtn.style.display = 'none';
+    uploadInput.value = '';
+    uploadLoading.style.setProperty('display', 'none', 'important');
+    imageData = null;
+}
+
+function showMainLoading() {
+    loadingIndicator.style.display = 'flex';
+    resultDiv.style.display = 'none';
+    resultImg.style.display = 'none';
+}
+
+function hideMainLoading() {
+    console.log('hideMainLoading');
+    loadingIndicator.style.setProperty('display', 'none', 'important');
+    cameraLoading.style.setProperty('display', 'none', 'important');
+    uploadLoading.style.setProperty('display', 'none', 'important');
+}
+
+function showResult(result) {
+    if (result) {
+        resultDiv.innerHTML = 'Hasil Deteksi: ' + result.result;
+        resultDiv.classList.remove('alert-danger');
+        resultDiv.classList.add('alert-success');
+        resultImg.src = result.image;
+        resultDiv.style.display = 'block';
+        resultImg.style.display = 'block';
+    }
+}
+
+function showError(message) {
+    hideMainLoading();
+    resultDiv.innerHTML = 'Error: ' + message;
+    resultDiv.classList.remove('alert-success');
+    resultDiv.classList.add('alert-danger');
+    resultDiv.style.display = 'block';
+    resultImg.style.display = 'none';
+}
+
+async function sendImageToServer(imageData, source = 'camera') {
+    // Show appropriate loading indicator
+    if (source === 'camera') {
+        cameraLoading.style.display = 'flex';
+    } else {
+        uploadLoading.style.display = 'flex';
+    }
+
+    try {
+        // Hide modal loading indicators
+        // loadingIndicator.style.setProperty('display', 'none', 'important');
+        cameraLoading.style.setProperty('display', 'none', 'important');
+        uploadLoading.style.setProperty('display', 'none', 'important');
+        
+        // Show main loading immediately
+        showMainLoading();
+        
+        const response = await fetch('/process_image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageData })
+        });
+
+        if (!response.ok) throw new Error('Gagal mengirim gambar');
+
+        const result = await response.json();
+        
+        // Show loading for exactly 5 seconds, then show result
+        setTimeout(() => {
+            hideMainLoading();
+            showResult(result);
+        }, 5000);
+
+    } catch (error) {
+        console.error(error);
+        // Hide modal loading indicators
+        cameraLoading.style.setProperty('display', 'none', 'important');
+        uploadLoading.style.setProperty('display', 'none', 'important');
+        
+        // Show loading for 5 seconds, then show error
+        setTimeout(() => {
+            showError(error.message);
+        }, 5000);
+    }
+}
+
+// Event listeners untuk reset saat modal tertutup
+document.getElementById('cameraModal').addEventListener('hidden.bs.modal', () => {
+    resetCameraModal();
+});
+
+document.getElementById('uploadModal').addEventListener('hidden.bs.modal', () => {
+    resetUploadModal();
+});
+
+// List kamera
 async function listCameras() {
     const devices = await navigator.mediaDevices.enumerateDevices();
     cameraSelect.innerHTML = '';
@@ -67,245 +244,183 @@ async function listCameras() {
         if (device.kind === 'videoinput') {
             const option = document.createElement('option');
             option.value = device.deviceId;
-            option.text = device.label || `Camera ${cameraSelect.length + 1}`;
+            option.text = device.label || `Kamera ${cameraSelect.length + 1}`;
             cameraSelect.appendChild(option);
         }
     });
 }
 
-// Start camera with selected device
+// Mulai kamera
 async function startCamera(deviceId = null) {
-    if (stream) stopCamera();
-    let constraints = {
-        video: {
-            width: { ideal: 640 },
-            height: { ideal: 480 }
-        }
-    };
-    if (deviceId) {
-        constraints.video.deviceId = { exact: deviceId };
+    // Stop existing stream first
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
     }
+    
+    let constraints = { video: true };
+    if (deviceId) {
+        constraints.video = { deviceId: { exact: deviceId } };
+    }
+    
     try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
-        videoTrack = stream.getVideoTracks()[0];
-        startCamBtn.style.display = 'none';
-        stopCamBtn.style.display = 'inline-block';
-        // Setup zoom and brightness controls
-        setupZoom();
-        setupBrightness();
+        
+        // Ensure only video is visible initially
+        video.style.display = 'block';
+        canvas.style.display = 'none';
+        
+        // Reset capture button jika sebelumnya sudah capture
+        captureBtn.textContent = 'Capture Photo';
+        sendBtn.style.display = 'none';
+        
     } catch (err) {
-        alert('Could not access the camera: ' + err);
+        console.error('Camera error:', err);
+        alert('Tidak dapat mengakses kamera: ' + err.message);
     }
 }
 
-// Stop camera
-function stopCamera() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
-        stream = null;
-        videoTrack = null;
-        startCamBtn.style.display = 'inline-block';
-        stopCamBtn.style.display = 'none';
-        zoomLevelSpan.textContent = '';
-        brightnessLevelSpan.textContent = '';
-    }
-}
-
-// Setup zoom controls
-function setupZoom() {
-    console.log("MASUK FUGNSI ZOOM")
-    if (!videoTrack) return;
-    const capabilities = videoTrack.getCapabilities();
-    console.log("capabilities",capabilities)
-    if ('zoom' in capabilities) {
-        minZoom = capabilities.zoom.min;
-        maxZoom = capabilities.zoom.max;
-        currentZoom = videoTrack.getSettings().zoom || minZoom;
-        zoomLevelSpan.textContent = `Zoom: ${currentZoom.toFixed(1)}x`;
-        zoomInBtn.disabled = false;
-        zoomOutBtn.disabled = false;
-    } else {
-        zoomLevelSpan.textContent = 'Zoom not supported';
-        zoomInBtn.disabled = true;
-        zoomOutBtn.disabled = true;
-    }
-}
-
-// Change zoom
-function changeZoom(delta) {
-    if (!videoTrack) return;
-    let newZoom = Math.min(maxZoom, Math.max(minZoom, currentZoom + delta));
-    videoTrack.applyConstraints({ advanced: [{ zoom: newZoom }] }).then(() => {
-        currentZoom = newZoom;
-        zoomLevelSpan.textContent = `Zoom: ${currentZoom.toFixed(1)}x`;
-    });
-}
-
-// Setup brightness controls
-function setupBrightness() {
-    if (!videoTrack) return;
-    const capabilities = videoTrack.getCapabilities();
-    if ('brightness' in capabilities) {
-        minBrightness = capabilities.brightness.min;
-        maxBrightness = capabilities.brightness.max;
-        currentBrightness = videoTrack.getSettings().brightness || minBrightness;
-        brightnessLevelSpan.textContent = `Brightness: ${currentBrightness.toFixed(1)}`;
-        brightnessUpBtn.disabled = false;
-        brightnessDownBtn.disabled = false;
-    } else {
-        brightnessLevelSpan.textContent = 'Brightness not supported';
-        brightnessUpBtn.disabled = true;
-        brightnessDownBtn.disabled = true;
-    }
-}
-
-function changeBrightness(delta) {
-    if (!videoTrack) return;
-    let newBrightness = Math.min(maxBrightness, Math.max(minBrightness, currentBrightness + delta));
-    videoTrack.applyConstraints({ advanced: [{ brightness: newBrightness }] }).then(() => {
-        currentBrightness = newBrightness;
-        brightnessLevelSpan.textContent = `Brightness: ${currentBrightness.toFixed(1)}`;
-    });
-}
-
-// Event listeners
-startCamBtn.onclick = () => startCamera(currentDeviceId);
-stopCamBtn.onclick = stopCamera;
-cameraSelect.onchange = () => {
-    currentDeviceId = cameraSelect.value;
-    startCamera(currentDeviceId);
-};
-zoomInBtn.onclick = () => changeZoom(zoomStep);
-zoomOutBtn.onclick = () => changeZoom(-zoomStep);
-brightnessUpBtn.onclick = () => changeBrightness(brightnessStep);
-brightnessDownBtn.onclick = () => changeBrightness(-brightnessStep);
-
-// On page load
-listCameras().then(() => {
-    if (cameraSelect.options.length > 0) {
-        currentDeviceId = cameraSelect.value;
-    }
-});
-
+// Capture foto - PERBAIKAN UTAMA
 captureBtn.onclick = () => {
-    // Buat offscreen canvas dengan resolusi tinggi
-    const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = 1280;
-    offscreenCanvas.height = 720;
-    offscreenCanvas.getContext('2d').drawImage(video, 0, 0, 1280, 720);
-    imageData = offscreenCanvas.toDataURL('image/png');
-    // Tampilkan preview kecil di canvas utama
-    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-    // Atur brightness awal
-    adjustCanvasBrightness(canvas, currentBrightness);
-    canvas.style.display = 'block';
-    sendBtn.style.display = 'inline-block';
-    // Tampilkan slider brightness
-    let canvasBrightness = 1;
-    const canvasBrightnessSlider = document.createElement('input');
-    canvasBrightnessSlider.type = 'range';
-    canvasBrightnessSlider.min = '0.5';
-    canvasBrightnessSlider.max = '2';
-    canvasBrightnessSlider.step = '0.05';
-    canvasBrightnessSlider.value = '1';
-    canvasBrightnessSlider.style.display = 'block';
-    canvasBrightnessSlider.className = 'form-range mt-2';
-    canvas.parentNode.insertBefore(canvasBrightnessSlider, canvas.nextSibling);
-    const canvasBrightnessLabel = document.createElement('span');
-    canvasBrightnessLabel.textContent = 'Brightness: 1.0';
-    canvasBrightnessLabel.style.display = 'inline-block';
-    canvas.parentNode.insertBefore(canvasBrightnessLabel, canvasBrightnessSlider.nextSibling);
+    if (captureBtn.textContent === 'Capture Photo') {
+        // Pastikan video sudah ready
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+            alert('Video belum siap. Silakan tunggu sebentar.');
+            return;
+        }
+        
+        // Capture the photo untuk dikirim ke server (resolusi tinggi)
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = 1920;
+        offscreenCanvas.height = 1080;
+        offscreenCanvas.getContext('2d').drawImage(video, 0, 0, 1920, 1080);
+        imageData = offscreenCanvas.toDataURL('image/png');
 
-    canvasBrightnessSlider.oninput = function() {
-        canvasBrightness = parseFloat(this.value);
-        canvasBrightnessLabel.textContent = `Brightness: ${canvasBrightness.toFixed(2)}`;
-        // Redraw image with new brightness
-        const img = new window.Image();
-        img.onload = function() {
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            adjustCanvasBrightness(canvas, canvasBrightness);
-        };
-        img.src = imageData;
-    };
+        // Set canvas dimensions to match video's current display size
+        const videoRect = video.getBoundingClientRect();
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        // Draw pada preview canvas
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Sembunyikan video, tampilkan canvas preview
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        
+        // Show send button dan ubah text capture button
+        sendBtn.style.display = 'inline-block';
+        captureBtn.textContent = 'Ambil Ulang';
+        
+        console.log('Captured with dimensions:', canvas.width, 'x', canvas.height);
+        
+    } else {
+        // Reset - sembunyikan preview, tampilkan video
+        canvas.style.display = 'none';
+        video.style.display = 'block';
+        
+        // Hide send button dan reset capture button
+        sendBtn.style.display = 'none';
+        captureBtn.textContent = 'Capture Photo';
+        
+        // Clear canvas data
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        imageData = null;
+    }
 };
 
-// Handler untuk upload file
+// Upload file handler
 uploadInput.onchange = function(e) {
     const file = e.target.files[0];
     if (!file) return;
+    
     const reader = new FileReader();
     reader.onload = function(evt) {
         imageData = evt.target.result;
-        // Tampilkan preview kecil di canvas utama
         const img = new window.Image();
         img.onload = function() {
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            // Atur brightness awal
-            adjustCanvasBrightness(canvas, currentBrightness);
-            canvas.style.display = 'block';
-            sendBtn.style.display = 'inline-block';
-            // Tampilkan slider brightness
-            let canvasBrightness = 1;
-            const canvasBrightnessSlider = document.createElement('input');
-            canvasBrightnessSlider.type = 'range';
-            canvasBrightnessSlider.min = '0.5';
-            canvasBrightnessSlider.max = '2';
-            canvasBrightnessSlider.step = '0.05';
-            canvasBrightnessSlider.value = '1';
-            canvasBrightnessSlider.style.display = 'block';
-            canvasBrightnessSlider.className = 'form-range mt-2';
-            canvas.parentNode.insertBefore(canvasBrightnessSlider, canvas.nextSibling);
-            const canvasBrightnessLabel = document.createElement('span');
-            canvasBrightnessLabel.textContent = 'Brightness: 1.0';
-            canvasBrightnessLabel.style.display = 'inline-block';
-            canvas.parentNode.insertBefore(canvasBrightnessLabel, canvasBrightnessSlider.nextSibling);
-
-            canvasBrightnessSlider.oninput = function() {
-                canvasBrightness = parseFloat(this.value);
-                canvasBrightnessLabel.textContent = `Brightness: ${canvasBrightness.toFixed(2)}`;
-                // Redraw image with new brightness
-                const img = new window.Image();
-                img.onload = function() {
-                    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-                    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-                    adjustCanvasBrightness(canvas, canvasBrightness);
-                };
-                img.src = imageData;
-            };
+            const ctx = canvasUploadPreview.getContext('2d');
+            ctx.clearRect(0, 0, canvasUploadPreview.width, canvasUploadPreview.height);
+            
+            // Calculate aspect ratio for proper display
+            const aspectRatio = img.width / img.height;
+            let drawWidth = canvasUploadPreview.width;
+            let drawHeight = drawWidth / aspectRatio;
+            
+            if (drawHeight > canvasUploadPreview.height) {
+                drawHeight = canvasUploadPreview.height;
+                drawWidth = drawHeight * aspectRatio;
+            }
+            
+            const xOffset = (canvasUploadPreview.width - drawWidth) / 2;
+            const yOffset = (canvasUploadPreview.height - drawHeight) / 2;
+            
+            ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
+            canvasUploadPreview.style.display = 'block';
+            sendUploadBtn.style.display = 'inline-block';
         };
         img.src = imageData;
     };
     reader.readAsDataURL(file);
 };
 
+// Kirim ke server dari Camera Modal
 sendBtn.onclick = async () => {
-    resultDiv.innerHTML = 'Processing...';
-    const response = await fetch('/process_image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageData })
-    });
-    const result = await response.json();
-    resultDiv.innerHTML = 'Result: ' + result.result;
-    resultImg.src = result.image;
+    if (!imageData) return;
+    
+    // Close modal first
+    const modal = bootstrap.Modal.getInstance(document.getElementById('cameraModal'));
+    modal.hide();
+    
+    // Send to server
+    await sendImageToServer(imageData, 'camera');
 };
 
-// Fungsi untuk mengatur brightness pada canvas setelah capture
-function adjustCanvasBrightness(canvas, value) {
-    const ctx = canvas.getContext('2d');
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-        data[i] = Math.min(255, data[i] * value);     // Red
-        data[i+1] = Math.min(255, data[i+1] * value); // Green
-        data[i+2] = Math.min(255, data[i+2] * value); // Blue
-    }
-    ctx.putImageData(imageData, 0, 0);
-}
+// Kirim ke server dari Upload Modal
+sendUploadBtn.onclick = async () => {
+    if (!imageData) return;
+    
+    // Close modal first
+    const modal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
+    modal.hide();
+    
+    // Send to server
+    await sendImageToServer(imageData, 'upload');
+};
+
+// Tombol buka modal
+openCameraPopupBtn.onclick = () => {
+    const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
+    modal.show();
+    
+    // Initialize camera after modal is shown
+    listCameras().then(() => {
+        if (cameraSelect.options.length > 0) {
+            currentDeviceId = cameraSelect.value;
+            startCamera(currentDeviceId);
+        }
+    });
+};
+
+openUploadPopupBtn.onclick = () => {
+    const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+    modal.show();
+};
+
+// Camera selection change handler
+cameraSelect.onchange = () => {
+    currentDeviceId = cameraSelect.value;
+    startCamera(currentDeviceId);
+};
+
+// Reset page state on load to ensure clean start
+document.addEventListener('DOMContentLoaded', () => {
+    resetCameraModal();
+    resetUploadModal();
+});
 </script>
 {% endblock %}
-

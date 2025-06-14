@@ -16,6 +16,14 @@ def home():
 def camera():
     return render_template("camera.html")
 
+@views.route('/riwayat')
+def riwayat():
+    return render_template("riwayat.html")
+    
+@views.route('/tentang')
+def tentang():
+    return render_template("tentang.html")
+
 @views.route('/process_image', methods=['POST'])
 def process_image():
     data = request.get_json()
