@@ -43,7 +43,8 @@ instance/       # Direktori instance Flask (untuk config/database lokal)
 *.log
 
 # Uploaded files / Media
-uploads/        # Jika aplikasi Anda mengizinkan upload file
+uploads/    
+static/uploads/    # Jika aplikasi Anda mengizinkan upload file
 
 # Testing
 .pytest_cache/

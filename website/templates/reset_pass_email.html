@@ -1,0 +1,12 @@
+<h3>Halo {{ user.full_name }},</h3>
+<p>Kami menerima permintaan untuk mereset password akun Anda.</p>
+<p>Klik tautan di bawah ini untuk mengatur ulang password:</p>
+<p>
+    <a href="{{ url_for('auth.reset_password', token=token, _external=True) }}" class="btn btn-primary">
+        Reset Password
+    </a>
+</p>
+<p>Tautan ini akan kedaluwarsa dalam 1 jam.</p>
+<p>Jika Anda tidak meminta reset password, abaikan email ini.</p>
+<p>Salam,<br>
+<strong>Tim Aplikasi Kami</strong></p>

@@ -1,0 +1,127 @@
+
+{% extends "base_auth.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<!-- Registration - Bootstrap Brain Component -->
+<section class="py-3 py-md-5 py-xl-8">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="mb-5">
+          <!-- Tombol Kembali ke Home -->
+          <div class="mb-4 ml-6 text-start">
+            <a href="{{ url_for('views.home') }}" class="btn btn-sm text-secondary">
+                &larr; Kembali ke Beranda
+            </a>
+          </div>
+          <h2 class="display-5 fw-bold text-center">Daftar Akun</h2>
+          <p class="text-center m-0">Sudah punya akun? <a href="{{ url_for('auth.login') }}" class="link-primary text-decoration-none">Login di sini</a></p>
+            
+        </div>
+      </div>
+    </div>
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10 col-xl-8">
+        <div class="row gy-5 justify-content-center">
+          <div class="col-12 col-lg-5">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <form method="POST" onsubmit="showLoader()">
+              {{ form.csrf_token }}
+
+              <div class="row gy-3 overflow-hidden">
+                <div class="col-12">
+                  <div class="form-floating mb-1">
+                    {{ form.full_name(class="form-control border-0 border-bottom rounded-0", placeholder="Nama Lengkap", required=True) }}
+                    <label for="full_name" class="form-label">Nama Lengkap</label>
+                    {% if form.full_name.errors %}
+                      {% for error in form.full_name.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="form-floating mb-1">
+                    {{ form.business_name(class="form-control border-0 border-bottom rounded-0", placeholder="Nama Usaha", required=True) }}
+                    <label for="business_name" class="form-label">Nama Usaha</label>
+                    {% if form.business_name.errors %}
+                      {% for error in form.business_name.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="form-floating mb-1">
+                    {{ form.username(class="form-control border-0 border-bottom rounded-0", placeholder="Username", required=True) }}
+                    <label for="username" class="form-label">Username</label>
+                    {% if form.username.errors %}
+                      {% for error in form.username.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="form-floating mb-1">
+                    {{ form.email(class="form-control border-0 border-bottom rounded-0", placeholder="Email", required=True) }}
+                    <label for="email" class="form-label">Email</label>
+                    {% if form.email.errors %}
+                      {% for error in form.email.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="form-floating mb-1">
+                    {{ form.password(class="form-control border-0 border-bottom rounded-0", placeholder="Password", required=True) }}
+                    <label for="password" class="form-label">Password</label>
+                    {% if form.password.errors %}
+                      {% for error in form.password.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="form-floating mb-1">
+                    {{ form.confirm(class="form-control border-0 border-bottom rounded-0", placeholder="Konfirmasi Password", required=True) }}
+                    <label for="confirm" class="form-label">Konfirmasi Password</label>
+                    {% if form.confirm.errors %}
+                      {% for error in form.confirm.errors %}
+                        <div class="text-danger small">{{ error }}</div>
+                      {% endfor %}
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <div class="d-grid">
+                    <button class="btn btn-primary btn-lg" type="submit">Daftar</button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,13 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Camera{% endblock %}
 {% block content %}
+<input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
+
 <div class="container text-center mt-5">
     <h2>Deteksi</h2>
-
     <!-- Main Buttons -->
-    <div class="mb-4">
-        <button id="open-camera-popup" class="btn btn-primary btn-lg mx-2" style="padding: 2rem 4rem; font-size: 1.8rem;">Camera</button>
-        <button id="open-upload-popup" class="btn btn-secondary btn-lg mx-2" style="padding: 2rem 4rem; font-size: 1.8rem;">Upload</button>
+    <div class="mb-4" id="main-buttons">
+        <button id="open-camera-popup" class="btn btn-primary btn-lg mx-2" style="padding: 4rem 8rem; font-size: 1.8rem;">Camera</button>
+        <button id="open-upload-popup" class="btn btn-secondary btn-lg mx-2" style="padding: 4rem 8rem; font-size: 1.8rem;">Upload</button>
+    </div>
+
+    <!-- Tombol Upload Ulang -->
+    <div class="mb-4" id="retry-button" style="display: none;">
+        <button id="retry-upload" class="btn btn-warning btn-lg mx-2" style="padding: 4rem 8rem; font-size: 1.8rem;">Upload Ulang Gambar</button>
     </div>
 
     <!-- Camera Modal -->
@@ -23,17 +29,15 @@
                         <label for="camera-select" class="form-label">Pilih Kamera:</label>
                         <select id="camera-select" class="form-select"></select>
                     </div>
-                    <!-- Container untuk video dan canvas - tampil bergantian -->
-                    <div class="text-center mb-3" style="width: 100%; max-width: 600px; margin: 0 auto; height: auto;">
+                    <div class="text-center mb-3" style="width: 100%; max-width: 600px; margin: 0 auto;">
                         <video id="video" width="700" height="394" autoplay playsinline class="img-fluid border rounded shadow-sm" style="display: block; width: 100%; height: auto;"></video>
                         <canvas id="canvas" width="700" height="394" class="img-fluid border rounded shadow-sm" style="display: none; width: 100%; height: auto;"></canvas>
                     </div>
                     <div class="d-grid gap-2 d-md-block text-center">
                         <button id="capture" class="btn btn-primary mt-3">Capture Photo</button>
-                        <button id="send" class="btn btn-success mt-3" style="display:none;">Kirim ke Server</button>
-                        <!-- Loading indicator for camera modal -->
+                        <button id="send" class="btn btn-success mt-3" style="display:none;">Kirim ke Server b</button>
                         <div id="camera-loading" class="d-flex align-items-center justify-content-center mt-3" style="display: none !important;">
-                            <strong>Mengirim...</strong>
+                            <strong>Mengirim b...</strong>
                             <div class="spinner-border ms-2" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -57,9 +61,8 @@
                     <canvas id="canvas-upload-preview" width="700" height="394" style="display: none;" class="img-fluid border rounded mx-auto d-block my-3"></canvas>
                     <div class="text-center">
                         <button id="send-upload" class="btn btn-success mt-3" style="display:none;">Kirim ke Server</button>
-                        <!-- Loading indicator for upload modal -->
                         <div id="upload-loading" class="d-flex align-items-center justify-content-center mt-3" style="display: none !important;">
-                            <strong>Mengirim...</strong>
+                            <strong>Mengirim A...</strong>
                             <div class="spinner-border ms-2" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
@@ -70,7 +73,45 @@
         </div>
     </div>
 
-    <!-- Main Loading Indicator (only shows when processing) -->
+    <!-- Modal Detail -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title text-center" id="detailModalLabel">Detail Hasil Deteksi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 p-3">
+                            <img id="detail-img" src="https://placehold.co/1920x1080" class="img-fluid border rounded shadow-sm" style="width: 100%; height: 300px; object-fit: cover;" />
+                        </div>
+                        <div class="col-md-6 p-3">
+                            <div class="mt-1 alert alert-success" role="alert">
+                                <h4>Hasil Deteksi</h4>
+                                <p>Penyakit Holer</p>
+                            </div>
+                            <div class="mt-4">
+                                <h4>Tindakan yang Disarankan</h4>
+                                <p>Lakukan Penambahan Pupuk</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="mt-4">
+                            <h4>Deskripsi</h4>
+                            <p>Penyakit Holer adalah penyakit yang menyerang daun tanaman. Gejala utamanya adalah munculnya bercak-bercak pada daun yang kemudian berkembang menjadi lubang.Penyakit Holer adalah penyakit yang menyerang daun tanaman. Gejala utamanya adalah munculnya bercak-bercak pada daun yang kemudian berkembang menjadi lubang.Penyakit Holer adalah penyakit yang menyerang daun tanaman. Gejala utamanya adalah munculnya bercak-bercak pada daun yang kemudian berkembang menjadi lubang.Penyakit Holer adalah penyakit yang menyerang daun tanaman. Gejala utamanya adalah munculnya bercak-bercak pada daun yang kemudian berkembang menjadi lubang.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
     <div id="loading-indicator" class="alert alert-info mt-4 d-flex align-items-center" role="alert" style="display: none !important;">
         <strong>Memproses gambar...</strong>
         <div class="spinner-border ms-2" role="status">
@@ -79,9 +120,9 @@
     </div>
 
     <!-- Result Display -->
-     <div id= "result-component" class="d-flex border rounded shadow-sm mt-4 mx-auto" style="max-width: 1000px;">
+    <div id="result-component" class="d-flex mt-4 mx-auto" style="max-width: 1000px;">
         <div class="p-3" style="max-width: 50%;">
-            <img id="result-img" class="img-fluid mt-3 border rounded shadow-sm" style="display: none; max-width: 480px; height: auto;" />
+            <img id="result-img" class="img-fluid mt-3 border rounded shadow-sm" style="display: none; max-width: 480px; max-height: 350px; width: 100%; height: auto; object-fit: contain; background: #f8f9fa;" />
         </div>
         <div class="p-3">
             <div id="result" class="mt-4 alert alert-success" role="alert" style="display: none;"></div>
@@ -89,7 +130,7 @@
                 <span id="result-detail-text" class="mt-4 alert alert-success" role="alert" style="display: none;"></span>
             </div>
         </div>
-     </div>
+    </div>
 </div>
 
 <script>
@@ -108,34 +149,24 @@ const sendUploadBtn = document.getElementById('send-upload');
 const loadingIndicator = document.getElementById('loading-indicator');
 const cameraLoading = document.getElementById('camera-loading');
 const uploadLoading = document.getElementById('upload-loading');
+const csrfToken = document.getElementById('csrf_token').value;
 
 let imageData = null;
 let stream = null;
 let currentDeviceId = null;
 
-// Reset functions
+// Reset Functions
 function resetCameraModal() {
-    // Stop and clear video stream
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-    }
+    if (stream) stream.getTracks().forEach(track => track.stop());
+    stream = null;
     video.srcObject = null;
-    
-    // Clear canvas and ensure proper visibility
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     canvas.style.display = 'none';
     video.style.display = 'block';
-    
-    // Reset buttons
     captureBtn.textContent = 'Capture Photo';
     sendBtn.style.display = 'none';
-    
-    // Hide loading
-    cameraLoading.style.setProperty('display', 'none', 'important');
-    
-    // Clear image data
+    cameraLoading.style.display = 'none !important';
     imageData = null;
 }
 
@@ -144,10 +175,11 @@ function resetUploadModal() {
     canvasUploadPreview.style.display = 'none';
     sendUploadBtn.style.display = 'none';
     uploadInput.value = '';
-    uploadLoading.style.setProperty('display', 'none', 'important');
+    uploadLoading.style.display = 'none !important';
     imageData = null;
 }
 
+// Show/Hide Loading
 function showMainLoading() {
     loadingIndicator.style.display = 'flex';
     resultDiv.style.display = 'none';
@@ -155,18 +187,33 @@ function showMainLoading() {
 }
 
 function hideMainLoading() {
-    console.log('hideMainLoading');
-    loadingIndicator.style.setProperty('display', 'none', 'important');
-    cameraLoading.style.setProperty('display', 'none', 'important');
-    uploadLoading.style.setProperty('display', 'none', 'important');
+    loadingIndicator.style.display = 'none !important';
+    cameraLoading.style.display = 'none !important';
+    uploadLoading.style.display = 'none !important';
 }
 
+// Fungsi untuk sembunyikan tombol utama, tampilkan tombol "Upload Ulang"
+function hideMainButtons() {
+    document.getElementById('main-buttons').style.display = 'none';
+    document.getElementById('retry-button').style.display = 'block';
+}
+
+// Fungsi untuk kembalikan ke tampilan awal
+function showMainButtons() {
+    document.getElementById('retry-button').style.display = 'none';
+    document.getElementById('main-buttons').style.display = 'block';
+    // Reset juga hasil deteksi jika perlu
+    resultDiv.style.display = 'none';
+    resultImg.style.display = 'none';
+    loadingIndicator.style.display = 'none !important';
+}
+
+// Show Result
 function showResult(result) {
     if (result) {
         resultDiv.innerHTML = 'Hasil Deteksi: ' + result.result;
-        resultDiv.classList.remove('alert-danger');
-        resultDiv.classList.add('alert-success');
-        resultImg.src = result.image;
+        resultDiv.classList.replace('alert-danger', 'alert-success');
+        resultImg.src = result.saved_path;
         resultDiv.style.display = 'block';
         resultImg.style.display = 'block';
     }
@@ -175,68 +222,111 @@ function showResult(result) {
 function showError(message) {
     hideMainLoading();
     resultDiv.innerHTML = 'Error: ' + message;
-    resultDiv.classList.remove('alert-success');
-    resultDiv.classList.add('alert-danger');
+    resultDiv.classList.replace('alert-success', 'alert-danger');
     resultDiv.style.display = 'block';
     resultImg.style.display = 'none';
 }
 
-async function sendImageToServer(imageData, source = 'camera') {
-    // Show appropriate loading indicator
-    if (source === 'camera') {
-        cameraLoading.style.display = 'flex';
-    } else {
-        uploadLoading.style.display = 'flex';
-    }
+// Check Login
+let loginCheckTriggered = false;
+
+async function checkLoginStatus() {
+    if (loginCheckTriggered) return false;
+    loginCheckTriggered = true;
 
     try {
-        // Hide modal loading indicators
-        // loadingIndicator.style.setProperty('display', 'none', 'important');
-        cameraLoading.style.setProperty('display', 'none', 'important');
-        uploadLoading.style.setProperty('display', 'none', 'important');
-        
-        // Show main loading immediately
-        showMainLoading();
-        
-        const response = await fetch('/process_image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: imageData })
+        const res = await fetch('/check_login', {
+            credentials: 'same-origin'
         });
-
-        if (!response.ok) throw new Error('Gagal mengirim gambar');
-
-        const result = await response.json();
-        
-        // Show loading for exactly 5 seconds, then show result
-        setTimeout(() => {
-            hideMainLoading();
-            showResult(result);
-        }, 5000);
-
+        const data = await res.json();
+        if (!data.logged_in) {
+            alert('Anda harus login terlebih dahulu.');
+            window.location.href = '/auth/login';
+            return false;
+        }
+        return true;
     } catch (error) {
-        console.error(error);
-        // Hide modal loading indicators
-        cameraLoading.style.setProperty('display', 'none', 'important');
-        uploadLoading.style.setProperty('display', 'none', 'important');
-        
-        // Show loading for 5 seconds, then show error
-        setTimeout(() => {
-            showError(error.message);
-        }, 5000);
+        console.error('Gagal cek login:', error);
+        loginCheckTriggered = false; // Biarkan coba lagi
+        alert('Tidak dapat menghubungi server. Silakan coba lagi.');
+        window.location.href = '/auth/login';
+        return false;
     }
 }
 
-// Event listeners untuk reset saat modal tertutup
-document.getElementById('cameraModal').addEventListener('hidden.bs.modal', () => {
-    resetCameraModal();
-});
+// Resize Image
+function resizeImage(dataURL, maxWidth = 640, maxHeight = 480) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
 
-document.getElementById('uploadModal').addEventListener('hidden.bs.modal', () => {
-    resetUploadModal();
-});
+            if (width > height) {
+                if (width > maxWidth) {
+                    height *= maxWidth / width;
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width *= maxHeight / height;
+                    height = maxHeight;
+                }
+            }
 
-// List kamera
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.src = dataURL;
+    });
+}
+
+// Send Image
+async function sendImageToServer(dataURL, source = 'camera') {
+    if (!(await checkLoginStatus())) return;
+    if (source === 'camera') cameraLoading.style.display = 'flex !important';
+    else uploadLoading.style.display = 'flex !important';
+
+    try {
+        showMainLoading();
+        const compressedImage = await resizeImage(dataURL);
+        const response = await fetch('/process_image', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ image: compressedImage })
+        });
+
+        if (!response.ok) throw new Error('Gagal mengirim gambar');
+        const result = await response.json();
+
+        setTimeout(() => {
+            showResult(result);
+            hideMainButtons(); // <-- Sembunyikan tombol utama, tampilkan "Upload Ulang"
+        }, 2000);
+
+    } catch (error) {
+        hideMainLoading();
+        console.error(error);
+        setTimeout(() => {
+            showError(error.message);
+            hideMainButtons(); // Tetap sembunyikan tombol utama meski error, agar bisa retry
+        }, 2000);
+    }
+}
+
+// Event Listeners
+document.getElementById('cameraModal').addEventListener('hidden.bs.modal', resetCameraModal);
+document.getElementById('uploadModal').addEventListener('hidden.bs.modal', resetUploadModal);
+
+// Camera Functions
 async function listCameras() {
     const devices = await navigator.mediaDevices.enumerateDevices();
     cameraSelect.innerHTML = '';
@@ -250,116 +340,73 @@ async function listCameras() {
     });
 }
 
-// Mulai kamera
 async function startCamera(deviceId = null) {
-    // Stop existing stream first
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-    }
-    
+    if (stream) stream.getTracks().forEach(track => track.stop());
     let constraints = { video: true };
-    if (deviceId) {
-        constraints.video = { deviceId: { exact: deviceId } };
-    }
-    
+    if (deviceId) constraints.video = { deviceId: { exact: deviceId } };
     try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         video.srcObject = stream;
-        
-        // Ensure only video is visible initially
         video.style.display = 'block';
         canvas.style.display = 'none';
-        
-        // Reset capture button jika sebelumnya sudah capture
         captureBtn.textContent = 'Capture Photo';
         sendBtn.style.display = 'none';
-        
     } catch (err) {
-        console.error('Camera error:', err);
         alert('Tidak dapat mengakses kamera: ' + err.message);
     }
 }
 
-// Capture foto - PERBAIKAN UTAMA
+// Capture Photo
 captureBtn.onclick = () => {
     if (captureBtn.textContent === 'Capture Photo') {
-        // Pastikan video sudah ready
         if (video.videoWidth === 0 || video.videoHeight === 0) {
             alert('Video belum siap. Silakan tunggu sebentar.');
             return;
         }
-        
-        // Capture the photo untuk dikirim ke server (resolusi tinggi)
         const offscreenCanvas = document.createElement('canvas');
         offscreenCanvas.width = 1920;
         offscreenCanvas.height = 1080;
         offscreenCanvas.getContext('2d').drawImage(video, 0, 0, 1920, 1080);
         imageData = offscreenCanvas.toDataURL('image/png');
 
-        // Set canvas dimensions to match video's current display size
-        const videoRect = video.getBoundingClientRect();
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        // Draw pada preview canvas
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Sembunyikan video, tampilkan canvas preview
         video.style.display = 'none';
         canvas.style.display = 'block';
-        
-        // Show send button dan ubah text capture button
         sendBtn.style.display = 'inline-block';
         captureBtn.textContent = 'Ambil Ulang';
-        
-        console.log('Captured with dimensions:', canvas.width, 'x', canvas.height);
-        
     } else {
-        // Reset - sembunyikan preview, tampilkan video
         canvas.style.display = 'none';
         video.style.display = 'block';
-        
-        // Hide send button dan reset capture button
         sendBtn.style.display = 'none';
         captureBtn.textContent = 'Capture Photo';
-        
-        // Clear canvas data
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
         imageData = null;
     }
 };
 
-// Upload file handler
+// Upload Image
 uploadInput.onchange = function(e) {
     const file = e.target.files[0];
     if (!file) return;
-    
     const reader = new FileReader();
-    reader.onload = function(evt) {
-        imageData = evt.target.result;
-        const img = new window.Image();
-        img.onload = function() {
+    reader.onload = async function(evt) {
+        imageData = await resizeImage(evt.target.result, 640, 480);
+        const img = new Image();
+        img.onload = () => {
             const ctx = canvasUploadPreview.getContext('2d');
             ctx.clearRect(0, 0, canvasUploadPreview.width, canvasUploadPreview.height);
-            
-            // Calculate aspect ratio for proper display
-            const aspectRatio = img.width / img.height;
+            const aspect = img.width / img.height;
             let drawWidth = canvasUploadPreview.width;
-            let drawHeight = drawWidth / aspectRatio;
-            
+            let drawHeight = drawWidth / aspect;
             if (drawHeight > canvasUploadPreview.height) {
                 drawHeight = canvasUploadPreview.height;
-                drawWidth = drawHeight * aspectRatio;
+                drawWidth = drawHeight * aspect;
             }
-            
-            const xOffset = (canvasUploadPreview.width - drawWidth) / 2;
-            const yOffset = (canvasUploadPreview.height - drawHeight) / 2;
-            
-            ctx.drawImage(img, xOffset, yOffset, drawWidth, drawHeight);
+            const x = (canvasUploadPreview.width - drawWidth) / 2;
+            const y = (canvasUploadPreview.height - drawHeight) / 2;
+            ctx.drawImage(img, x, y, drawWidth, drawHeight);
             canvasUploadPreview.style.display = 'block';
             sendUploadBtn.style.display = 'inline-block';
         };
@@ -368,36 +415,26 @@ uploadInput.onchange = function(e) {
     reader.readAsDataURL(file);
 };
 
-// Kirim ke server dari Camera Modal
+// Send Buttons
 sendBtn.onclick = async () => {
     if (!imageData) return;
-    
-    // Close modal first
     const modal = bootstrap.Modal.getInstance(document.getElementById('cameraModal'));
     modal.hide();
-    
-    // Send to server
+
     await sendImageToServer(imageData, 'camera');
 };
 
-// Kirim ke server dari Upload Modal
 sendUploadBtn.onclick = async () => {
     if (!imageData) return;
-    
-    // Close modal first
     const modal = bootstrap.Modal.getInstance(document.getElementById('uploadModal'));
     modal.hide();
-    
-    // Send to server
     await sendImageToServer(imageData, 'upload');
 };
 
-// Tombol buka modal
+// Open Modals
 openCameraPopupBtn.onclick = () => {
     const modal = new bootstrap.Modal(document.getElementById('cameraModal'));
     modal.show();
-    
-    // Initialize camera after modal is shown
     listCameras().then(() => {
         if (cameraSelect.options.length > 0) {
             currentDeviceId = cameraSelect.value;
@@ -411,14 +448,27 @@ openUploadPopupBtn.onclick = () => {
     modal.show();
 };
 
-// Camera selection change handler
 cameraSelect.onchange = () => {
     currentDeviceId = cameraSelect.value;
     startCamera(currentDeviceId);
 };
 
-// Reset page state on load to ensure clean start
 document.addEventListener('DOMContentLoaded', () => {
+    resetCameraModal();
+    resetUploadModal();
+});
+
+// Event listener untuk tombol "Upload Ulang"
+document.getElementById('retry-upload').onclick = function () {
+    showMainButtons();         // Tampilkan kembali tombol Camera & Upload
+    resetCameraModal();        // Reset kamera
+    resetUploadModal();        // Reset upload
+    resultDiv.style.display = 'none';
+    resultImg.style.display = 'none';
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    showMainButtons();   // Pastikan tombol utama muncul
     resetCameraModal();
     resetUploadModal();
 });

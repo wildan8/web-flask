@@ -3,13 +3,37 @@
 {% block title %}Tentang Aplikasi{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <h1>Tentang Aplikasi</h1>
+<div class="container p-6 mt-5">
+    <div class="row align-items-center flex-md-row-reverse">
+        <div class="col-md-6">
+            <div class="lc-block mb-4">
+                <div editable="rich">
+                    <h2 class="fw-bold display-5">Tentang Aplikasi</h2>
+                </div>
+            </div>
+            <div class="lc-block mb-5">
+                <div editable="rich">
+                    <p class="lead text-muted">Aplikasi ini bertujuan untuk mendeteksi penyakit moler pada daun bawang merah dengan menggunakan metode pengolahan citra digital dengan model deep learning Convolutional Neural Network (CNN).</p>
+                </div>
+            </div>
         </div>
-        <div class="col-md-12 mt-4">
-            <span >Aplikasi ini mendeteksi penyakit pada daun bawang merah dengan menggunakan metode pengolahan citra digital.</span>
+        <div class="col-md-6 d-flex gap-4">
+            <div class="col">
+                <div class="lc-block">
+                    <img class="img-fluid" src="{{ url_for('static', filename='cara-menanam-bawang-merah-2.jpg') }}" style="width: 400px; height: 400px; object-fit: cover; filter: brightness(0.8);" alt="Photo by Rikonavt" loading="lazy">
+                </div>
+                <div class="lc-block my-4 bg-dark bg-opacity-10" style="min-height:256px">
+                    <img class="img-fluid" src="{{ url_for('static', filename='enrekang01.jpg') }}" style="height: 260px; object-fit: cover; filter: brightness(0.8);" alt="Photo by Rikonavt" loading="lazy">
+                </div>
+            </div>
+            <div class="col">
+                <div class="lc-block my-4 bg-dark bg-opacity-10" style="height:256px">
+                    <img class="img-fluid" src="{{ url_for('static', filename='bawang_merah.jpg') }}" style="height: 260px; object-fit: cover; filter: brightness(0.8);" alt="Photo by Rikonavt" loading="lazy">
+                </div>
+                <div class="lc-block">
+                    <img class="img-fluid" src="{{ url_for('static', filename='pemandangan_enkarang.jpg') }}" style="width: 400px; height: 350px; object-fit: cover; filter: brightness(0.8);" alt="Photo by Rikonavt" loading="lazy">
+                </div>
+            </div>
         </div>
     </div>
 </div>
