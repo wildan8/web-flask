@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"  rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Optional Custom CSS -->
     <style>
@@ -14,6 +14,183 @@
             font-weight: bold;
             color: #0d6efd !important;
         }
+
+        /* loader start */
+        .global-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Background gelap transparan */
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            display: none;
+            /* default hidden */
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* Tetap gunakan inner untuk center loader */
+        .global-loader-inner {
+            position: relative;
+            z-index: 10000;
+        }
+
+        /* Animasi loader tetap sama */
+        .global-loader-blocks {
+            width: 58px;
+            height: 58px;
+            position: relative;
+        }
+
+        .global-loader span {
+            background: linear-gradient(90deg, #423f9c 31%, #862359 69%);
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            position: absolute;
+            opacity: 0;
+            animation: load 4.6s ease-in-out infinite;
+        }
+
+        /* Positioning blocks in 4x4 grid */
+        .global-loader span.block-1 {
+            top: 0;
+            left: 0;
+            animation-delay: 1.06s;
+        }
+
+        .global-loader span.block-2 {
+            top: 0;
+            left: 16px;
+            animation-delay: 0.97s;
+        }
+
+        .global-loader span.block-3 {
+            top: 0;
+            left: 31px;
+            animation-delay: 0.87s;
+        }
+
+        .global-loader span.block-4 {
+            top: 0;
+            left: 47px;
+            animation-delay: 0.78s;
+        }
+
+        .global-loader span.block-5 {
+            top: 16px;
+            left: 0;
+            animation-delay: 0.69s;
+        }
+
+        .global-loader span.block-6 {
+            top: 16px;
+            left: 16px;
+            animation-delay: 0.6s;
+        }
+
+        .global-loader span.block-7 {
+            top: 16px;
+            left: 31px;
+            animation-delay: 0.51s;
+        }
+
+        .global-loader span.block-8 {
+            top: 16px;
+            left: 47px;
+            animation-delay: 0.41s;
+        }
+
+        .global-loader span.block-9 {
+            top: 31px;
+            left: 0;
+            animation-delay: 0.32s;
+        }
+
+        .global-loader span.block-10 {
+            top: 31px;
+            left: 16px;
+            animation-delay: 0.23s;
+        }
+
+        .global-loader span.block-11 {
+            top: 31px;
+            left: 31px;
+            animation-delay: 0.14s;
+        }
+
+        .global-loader span.block-12 {
+            top: 31px;
+            left: 47px;
+            animation-delay: 0.05s;
+        }
+
+        .global-loader span.block-13 {
+            top: 47px;
+            left: 0;
+            animation-delay: -0.05s;
+        }
+
+        .global-loader span.block-14 {
+            top: 47px;
+            left: 16px;
+            animation-delay: -0.14s;
+        }
+
+        .global-loader span.block-15 {
+            top: 47px;
+            left: 31px;
+            animation-delay: -0.23s;
+        }
+
+        .global-loader span.block-16 {
+            top: 47px;
+            left: 47px;
+            animation-delay: -0.32s;
+        }
+
+        @keyframes load {
+
+            0%,
+            15% {
+                opacity: 0;
+                transform: translateY(-97px);
+            }
+
+            30%,
+            70% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            85%,
+            100% {
+                opacity: 0;
+                transform: translateY(97px);
+            }
+        }
+
+        .ftr {
+            position: absolute;
+            bottom: 50px;
+            width: 100%;
+            text-align: center;
+            color: #333;
+            z-index: 9999;
+        }
+
+        #result-component {
+            transition: opacity 0.3s ease-out;
+        }
+
+        #result-img {
+            transition: opacity 0.3s ease-out;
+        }
+
+        /* loader end */
     </style>
 
     <title>{% block title %}Home{% endblock %}</title>
@@ -21,10 +198,34 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg{% if navbar_overlay %} navbar-dark text-white bg-transparent position-absolute w-100 z-3{% else %} navbar-light bg-light shadow-sm{% endif %}">
+    <div class="global-loader" id="global-loader" style="display: none;">
+        <div class="global-loader-inner">
+            <div class="global-loader-blocks">
+                <span class="block-1"></span>
+                <span class="block-2"></span>
+                <span class="block-3"></span>
+                <span class="block-4"></span>
+                <span class="block-5"></span>
+                <span class="block-6"></span>
+                <span class="block-7"></span>
+                <span class="block-8"></span>
+                <span class="block-9"></span>
+                <span class="block-10"></span>
+                <span class="block-11"></span>
+                <span class="block-12"></span>
+                <span class="block-13"></span>
+                <span class="block-14"></span>
+                <span class="block-15"></span>
+                <span class="block-16"></span>
+            </div>
+        </div>
+    </div>
+    <nav
+        class="navbar navbar-expand-lg{% if navbar_overlay %} navbar-dark text-white bg-transparent position-absolute w-100 z-3{% else %} navbar-light bg-light shadow-sm{% endif %}">
         <div class="container-fluid">
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false"
+                aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse justify-content-center" id="navbarSupportedContent">
@@ -34,33 +235,25 @@
                     <li class="nav-item me-4"><a class="nav-link" href="/riwayat">Riwayat</a></li>
                     <li class="nav-item me-4"><a class="nav-link" href="/tentang">Tentang Aplikasi</a></li>
                     {% if current_user.is_authenticated %}
-                        <span class="navbar-text me-3">
+                    <span class="navbar-text me-3">
                         👋 Halo, {{ current_user.full_name }}
-                        </span>
-                        <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Logout</a>
+                    </span>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">Logout</a>
                     {% else %}
-                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary me-2">Login</a>
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Register</a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary me-2">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Register</a>
                     {% endif %}
-                    <!-- {% if session.get('user_id') %}
-                        <li class="nav-item"><a class="nav-link" href="/auth/logout">Logout ({{ session.get('username') }})</a></li>
-                    {% else %}
-                        <li class="nav-item"><a class="nav-link" href="/auth/login">Login</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/auth/register">Register</a></li>
-                    {% endif %} -->
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- <div class="container"> -->
-        {% block content %}
-        {% endblock %}
-    <!-- </div> -->
-
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> 
+    {% block content %}
+    {% endblock %}
     
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <!-- Custom JS -->
     <script type="text/javascript" src="{{ url_for('static', filename='index.js') }}"></script>
 </body>

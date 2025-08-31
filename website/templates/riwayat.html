@@ -4,15 +4,29 @@
 
 {% block content %}
 <div class="container">
+    <!-- Modal Konfirmasi Non-aktifkan -->
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-12 mt-5">
             <h1>Riwayat Deteksi</h1>
         </div>
     </div>
+
+    <!-- Info Jumlah Data -->
+    {% if results.total > 0 %}
+    <div class="row">
+        <div class="col-md-12">
+            <p class="text-muted">
+                Menampilkan {{ results.items|length }} dari {{ results.total }} entri
+                {% if results.pages > 1 %} | Halaman {{ results.page }} dari {{ results.pages }}{% endif %}
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
     <div class="row mt-4">
         <div class="col-md-12">
             <div class="table-responsive">
-                <table class="table" style="font-size: 0.85em;">
+                <table class="table table-hover" style="font-size: 0.85em;">
                     <thead class="table-light">
                         <tr>
                             <th>No</th>
@@ -24,56 +38,167 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {% if results.items %}
+                        {% for result in results.items %}
                         <tr>
-                            <td>1</td>
-                            <td style="overflow-wrap: break-word;">2021-01-01 12:00:00</td>
+                            <!-- Nomor urut global -->
+                            <td>{{ (results.page - 1) * results.per_page + loop.index }}</td>
+                            <td style="overflow-wrap: break-word;">
+                                {{ result.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </td>
                             <td>
                                 <div style="height: 80px; overflow: hidden;">
-                                    <img src="https://placehold.co/1920x1080" alt="Foto Daun" class="img-fluid rounded" style="width: 80%; height: 100%; object-fit: cover;">
+                                    <img src="{{ url_for('static', filename='uploads/' + result.image_path.split('/static/uploads/')[1]) }}"
+                                        alt="Foto Daun" class="img-fluid rounded"
+                                        style="width: 80%; height: 100%; object-fit: cover;">
                                 </div>
                             </td>
-                            <td style="overflow-wrap: break-word;">Penyakit Holer</td>
-                            <td style="overflow-wrap: break-word;">Lakukan Penambahan Pupuk</td>
+                            <td style="overflow-wrap: break-word;">
+                                {{ result.result | title }}
+                            </td>
+                            <td style="overflow-wrap: break-word;">
+                                {% if result.result == 'moler' %}
+                                Lakukan penyemprotan pestisida dan perbaiki drainase
+                                {% else %}
+                                Tanaman dalam kondisi sehat, lanjutkan perawatan rutin
+                                {% endif %}
+                            </td>
                             <td>
-                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#detailModal">Lihat</button>
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#detailModal-{{ result.id }}">
+                                    Lihat
+                                </button>
+                                <button class="btn btn-danger btn-sm ms-1" data-bs-toggle="modal"
+                                    data-bs-target="#confirmDeactivateModal-{{ result.id }}">
+                                    Hapus
+                                </button>
                             </td>
                         </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center">Belum ada riwayat deteksi.</td>
+                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <!-- Pagination -->
+    {% if results.pages > 1 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Navigasi halaman riwayat">
+                <ul class="pagination justify-content-center flex-wrap gap-1">
+                    <!-- Previous -->
+                    <li class="page-item {% if not results.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('views.riwayat') }}?page={{ results.prev_num }}">&laquo;
+                            Sebelumnya</a>
+                    </li>
+
+                    <!-- Nomor Halaman -->
+                    {% for page_num in results.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=3) %}
+                    {% if page_num %}
+                    {% if page_num == results.page %}
+                    <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('views.riwayat') }}?page={{ page_num }}">{{ page_num
+                            }}</a>
+                    </li>
+                    {% endif %}
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    <!-- Next -->
+                    <li class="page-item {% if not results.has_next %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('views.riwayat') }}?page={{ results.next_num }}">Berikutnya &raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
-<!-- Modal Detail -->
-<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+{% for result in results.items %}
+<div class="modal fade" id="confirmDeactivateModal-{{ result.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Hapus Data</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus entri ini?</p>
+                <p><strong>Hasil:</strong> {{ result.result | title }}</p>
+                <p><strong>Tanggal:</strong> {{ result.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                <p class="text-danger">Data akan hilang dari riwayat</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form action="{{ url_for('views.nonaktifkan_riwayat', result_id=result.id) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Modal untuk Setiap Hasil -->
+{% for result in results.items %}
+<div class="modal fade" id="detailModal-{{ result.id }}" tabindex="-1"
+    aria-labelledby="detailModalLabel-{{ result.id }}" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title text-center" id="detailModalLabel">Detail Hasil Deteksi</h5>
+                <h5 class="modal-title" id="detailModalLabel-{{ result.id }}">Detail Hasil Deteksi</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6 p-3">
-                        <img id="detail-img" src="https://placehold.co/1920x1080" class="img-fluid border rounded shadow-sm" style="width: 100%; height: 300px; object-fit: cover;" />
+                        <img src="{{ url_for('static', filename='uploads/' + result.image_path.split('/static/uploads/')[1]) }}"
+                            class="img-fluid border rounded shadow-sm"
+                            style="width: 100%; height: 300px; object-fit: cover;" />
                     </div>
                     <div class="col-md-6 p-3">
-                        <div class="mt-1 alert alert-success" role="alert">
-                            <h4>Hasil Deteksi</h4>
-                            <p>Penyakit Holer</p>
+                        <h4>Hasil Deteksi</h4>
+                        <div class="mt-1 alert alert-{% if result.result == 'sehat' %}success{% else %}danger{% endif %}"
+                            role="alert">
+                            <span>{{ result.result | title }} ({{ '%.2f'|format(result.confidence * 100) }}%)</span>
                         </div>
                         <div class="mt-4">
                             <h4>Tindakan yang Disarankan</h4>
-                            <p>Lakukan Penambahan Pupuk</p>
+                            <p>
+                                {% if result.result == 'moler' %}
+                                Segera lakukan penyemprotan pestisida alami dan pastikan drainase tanah baik.
+                                {% else %}
+                                Pertahankan kondisi tanam, siram secukupnya, dan tambah pupuk organik.
+                                {% endif %}
+                            </p>
                         </div>
                     </div>
                 </div>
-                <div>
-                    <div class="mt-4">
-                        <h4>Deskripsi</h4>
-                        <p>Penyakit Holer adalah penyakit yang menyerang daun tanaman. Gejala utamanya adalah munculnya bercak-bercak pada daun yang kemudian berkembang menjadi lubang.Penyakit Holer adalah penyakit yang menyerang daun tanaman. Gejala utamanya adalah munculnya bercak-bercak pada daun yang kemudian berkembang menjadi lubang.Penyakit Holer adalah penyakit yang menyerang daun tanaman. Gejala utamanya adalah munculnya bercak-bercak pada daun yang kemudian berkembang menjadi lubang.Penyakit Holer adalah penyakit yang menyerang daun tanaman. Gejala utamanya adalah munculnya bercak-bercak pada daun yang kemudian berkembang menjadi lubang.</p>
-                    </div>
+                <div class="mt-4">
+                    <h4>Deskripsi</h4>
+                    <p>
+                        {% if result.result == 'moler' %}
+                        Moler pada daun bawang disebabkan oleh jamur atau bakteri, sering muncul di lingkungan lembap.
+                        Gejalanya daun layu, kuning, dan membusuk dari pangkal. Perlu penanganan cepat agar tidak
+                        menyebar.
+                        {% else %}
+                        Daun bawang sehat memiliki warna hijau segar, tekstur kokoh, dan tumbuh tegak.
+                        Kondisi ini menunjukkan perawatan yang baik dan lingkungan tumbuh yang optimal.
+                        {% endif %}
+                    </p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -82,5 +207,6 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{% endfor %}
 
+{% endblock %}

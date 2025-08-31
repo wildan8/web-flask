@@ -8,11 +8,12 @@ import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from flask_login import login_required, current_user  # Import decorator dari auth.py
-
+from .models import DetectionResult
+from .import db
 views = Blueprint('views', __name__)
 
 # Load model
-model = load_model('model_daunbawang.h5')
+model = load_model('model_moler.h5')
 print("✅ Model .h5 berhasil dimuat!")
 
 # Cek input shape model
@@ -39,11 +40,45 @@ def camera():
     return render_template("camera.html")
 
 @views.route('/riwayat')
-@login_required  # Proteksi: hanya user yang login bisa akses
+@login_required
 def riwayat():
-    """Halaman riwayat deteksi"""
-    return render_template("riwayat.html")
+    """Halaman riwayat deteksi dengan paginasi"""
+    user_id = session['_user_id']
     
+    # Ambil parameter halaman dari URL (default: 1)
+    page = request.args.get('page', 1, type=int)
+    
+    # Jumlah data per halaman
+    per_page = 10  # Bisa diubah: 5, 10, 20, dll
+    
+    # Query dengan paginasi
+    results = DetectionResult.query.filter_by(user_id=user_id, aktif=True) \
+        .order_by(DetectionResult.timestamp.desc()) \
+        .paginate(
+            page=page,
+            per_page=per_page,
+            error_out=False  # Jangan error jika halaman di luar jangkauan
+        )
+    
+    return render_template('riwayat.html', results=results)
+
+# views.py
+@views.route('/riwayat/nonaktifkan/<int:result_id>', methods=['POST'])
+@login_required
+def nonaktifkan_riwayat(result_id):
+    user_id = session['_user_id']
+
+    result = DetectionResult.query.filter_by(id=result_id, user_id=user_id).first()
+    if not result:
+        flash("Data tidak ditemukan.", "error")
+    elif not result.aktif:
+        flash("Data sudah tidak aktif.", "info")
+    else:
+        result.aktif = False
+        db.session.commit()
+        flash("Entri berhasil dinonaktifkan dari riwayat.", "success")
+
+    return redirect(request.referrer or url_for('views.riwayat'))
 @views.route('/tentang')
 def tentang():
     """Halaman tentang aplikasi"""
@@ -66,7 +101,7 @@ def check_login():
 @views.route('/process_image', methods=['POST'])
 @login_required  # Proteksi: hanya user yang login bisa akses
 def process_image():
-    """Proses deteksi smile dari gambar"""
+    """Proses deteksi dari gambar"""
     data = request.get_json()
     image_data = data['image']
     # print(image_data)
@@ -99,32 +134,41 @@ def process_image():
 
     # Prediksi
     predictions = model.predict(img_array)
-    print(predictions)
+    print("prediction",predictions)
 
-    prob_sehat, prob_moler = predictions[0]  # unpack
-    prob_sehat = float(prob_sehat)
-    prob_moler = float(prob_moler)
+    confidence = float(predictions[0])  # unpack
+    # confidence = float(prediction_res)
+    print("prob Result:", confidence)
+    # prob_moler = float(prob_moler)
 
-    print(prob_sehat, prob_moler)
-    predicted_class = "sehat" if prob_sehat > prob_moler else "moler"
-    print("prob",prob_sehat > prob_moler)
+    # confidence = max(prob_sehat, prob_moler)
+    predicted_class = "sehat" if confidence > 0.5 else "moler"
+    # print("prob",prob_sehat > prob_moler)
     # Interpretasi hasil
-    # if predictions.shape[1] == 1:
-    #     prob = predictions[0][0]
-    #     predicted_class = 'sehat' if prob_sehat > prob_moler else 'moler'
-    #     confidence = max(prob, 1 - prob)
-    # else:
-    #     confidence = np.max(predictions)
-    #     predicted_class = CLASS_NAMES[np.argmax(predictions)]
 
     result = predicted_class
+     # 🔽 SIMPAN KE DATABASE
+    new_result = DetectionResult(
+        user_id=int(session['_user_id']),
+        image_path=f'/static/uploads/{filename}',
+        result=predicted_class,
+        confidence=confidence,
+        # prob_sehat=prob_sehat,
+        # prob_moler=prob_moler,
+        aktif = True
+    )
+    db.session.add(new_result)
+    db.session.commit()
 
     # print(f"✅ Deteksi selesai untuk user {user_id}: {result}")
 
     # Return JSON (tanpa variabel yang tidak ada)
     return jsonify({
         'result': result,
+        'confidence': confidence,
+        # 'prob_sehat': prob_sehat,
+        # 'prob_moler': prob_moler,
         'saved_path': f'/static/uploads/{filename}',
-        'original_path': f'/static/uploads/{filename}'
-        # Tambahkan field lain jika perlu
+        'original_path': f'/static/uploads/{filename}',
+        'detection_id': new_result.id  # opsional
     })

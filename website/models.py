@@ -42,3 +42,17 @@ class User(db.Model, UserMixin):
         except:
             return None
 
+class DetectionResult(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    image_path = db.Column(db.String(200), nullable=False)
+    result = db.Column(db.String(50), nullable=False)
+    confidence = db.Column(db.Float, nullable=False)
+    # prob_sehat = db.Column(db.Float)  # tambahan
+    # prob_moler = db.Column(db.Float)  # tambahan
+    aktif = db.Column(db.Boolean, default=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Deteksi {self.result} oleh user {self.user_id}>"
+
