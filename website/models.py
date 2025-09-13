@@ -51,7 +51,7 @@ class DetectionResult(db.Model):
     # prob_sehat = db.Column(db.Float)  # tambahan
     # prob_moler = db.Column(db.Float)  # tambahan
     aktif = db.Column(db.Boolean, default=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
 
     def __repr__(self):
         return f"<Deteksi {self.result} oleh user {self.user_id}>"

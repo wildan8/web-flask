@@ -119,6 +119,8 @@ def process_image():
     print(session)
     user_id = session['_user_id']
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+    # print("timestamp",timestamp)
+    # print("datenow",datetime.now())
     filename = f"user_{user_id}_img_{timestamp}.{file_ext}"
     file_path = os.path.join(save_folder, filename)
     
@@ -153,6 +155,7 @@ def process_image():
         image_path=f'/static/uploads/{filename}',
         result=predicted_class,
         confidence=confidence,
+        # timestamp = timestamp,
         # prob_sehat=prob_sehat,
         # prob_moler=prob_moler,
         aktif = True
