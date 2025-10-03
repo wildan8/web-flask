@@ -54,13 +54,18 @@
                                 </div>
                             </td>
                             <td style="overflow-wrap: break-word;">
-                                {{ result.result | title }}
+                                {% if result.result == 'moler' %}
+                                <span class="badge bg-danger text-white p-2">Penyakit Moler</span>
+                                {% else %}
+                                <span class="badge bg-success text-white p-2">Daun Bawang Sehat</span>
+                                {% endif %}
+                                <!-- {{ result.result | title }} -->
                             </td>
                             <td style="overflow-wrap: break-word;">
                                 {% if result.result == 'moler' %}
-                                Lakukan penyemprotan pestisida dan perbaiki drainase
+                                Segera lakukan penyemprotan pestisida alami dan pastikan drainase tanah baik.
                                 {% else %}
-                                Tanaman dalam kondisi sehat, lanjutkan perawatan rutin
+                                Pertahankan kondisi tanam, siram secukupnya, dan tambah pupuk organik.
                                 {% endif %}
                             </td>
                             <td>
@@ -191,12 +196,9 @@
                     <h4>Deskripsi</h4>
                     <p>
                         {% if result.result == 'moler' %}
-                        Moler pada daun bawang disebabkan oleh jamur atau bakteri, sering muncul di lingkungan lembap.
-                        Gejalanya daun layu, kuning, dan membusuk dari pangkal. Perlu penanganan cepat agar tidak
-                        menyebar.
+                        Penyakit moler pada daun bawang disebabkan oleh jamur atau bakteri, sering muncul di lingkungan lembap. Gejalanya daun layu, kuning, dan membusuk dari pangkal. Perlu penanganan cepat agar tidak menyebar.
                         {% else %}
-                        Daun bawang sehat memiliki warna hijau segar, tekstur kokoh, dan tumbuh tegak.
-                        Kondisi ini menunjukkan perawatan yang baik dan lingkungan tumbuh yang optimal.
+                        Hasil deteksi menunjukkan daun bawang merah dalam keadaan sehat, tanpa adanya perubahan warna, bentuk, atau gejala penyakit moler.
                         {% endif %}
                     </p>
                 </div>

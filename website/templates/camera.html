@@ -55,17 +55,16 @@
     <!-- Result Display -->
     <div id="result-component" class="mt-4 mx-auto flex-column flex-md-row" style="max-width: 1000px; display: none;">
         <div class="p-3 text-center" style="flex: 1;">
-            <img id="result-img" class="img-fluid border rounded shadow-sm"
+            <img id="result-img" class="img-fluid border rounded shadow-sm d-block mx-auto"
                 style="max-height: 350px; object-fit: contain; background: #f8f9fa; display: none ;">
         </div>
         <div id="result-text" class="p-3" style="flex: 1;">
             <div id="result" class="alert alert-success" role="alert" style="display: none;"></div>
             <div id="result-detail" class="mt-4">
                 <h4>Tindakan yang Disarankan</h4>
-                <p id="recommendation">Lakukan Penambahan Pupuk</p>
+                <p id="result-recomendation"></p>
                 <h4 class="mt-4">Deskripsi</h4>
-                <p id="description">Penyakit Holer adalah penyakit yang menyerang daun tanaman. Gejala utamanya adalah
-                    munculnya bercak-bercak pada daun yang kemudian berkembang menjadi lubang.</p>
+                <p id="result-description"></p>
             </div>
 
         </div>
@@ -87,6 +86,8 @@
     const previewImg = document.getElementById('preview-img');
     const sendUploadBtn = document.getElementById('send-upload');
     const resultDiv = document.getElementById('result');
+    const resultRecomendationDiv = document.getElementById('result-recomendation');
+    const resultDescriptionDiv = document.getElementById('result-description');
     const resultImg = document.getElementById('result-img');
     const retryButton = document.getElementById('retry-button');
     const cameraSelect = document.getElementById('camera-select');
@@ -350,12 +351,22 @@
     function showResult(result) {
         // Tampilkan container hasil
         document.getElementById('result-component').style.display = 'flex';
+        resultDiv.style.display = 'block';
 
         // Isi hasil deteksi
         resultDiv.innerHTML = `<strong>Hasil Deteksi:</strong> ${result.result || 'Penyakit Holer'}`;
-        resultDiv.style.display = 'block';
-        resultDiv.classList.remove('alert-danger');
-        resultDiv.classList.add('alert-success');
+        if (result.result == 'moler') {
+            resultDiv.classList.remove('alert-success');
+            resultDiv.classList.add('alert-danger');
+            resultRecomendationDiv.innerHTML = `Segera lakukan penyemprotan pestisida alami dan pastikan drainase tanah baik.`;
+            resultDescriptionDiv.innerHTML = `Penyakit moler pada daun bawang disebabkan oleh jamur atau bakteri, sering muncul di lingkungan lembap. Gejalanya daun layu, kuning, dan membusuk dari pangkal. Perlu penanganan cepat agar tidak menyebar.`;
+        } else {
+            resultDiv.classList.remove('alert-danger');
+            resultDiv.classList.add('alert-success');
+            resultRecomendationDiv.innerHTML = `Pertahankan kondisi tanam, siram secukupnya, dan tambah pupuk organik.`;
+            resultDescriptionDiv.innerHTML = `Hasil deteksi menunjukkan daun bawang merah dalam keadaan sehat, tanpa adanya perubahan warna, bentuk, atau gejala penyakit moler.`;
+        }
+
 
         // Tampilkan gambar jika ada
         if (result.saved_path) {
