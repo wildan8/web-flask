@@ -13,7 +13,7 @@ from .import db
 views = Blueprint('views', __name__)
 
 # Load model
-model = load_model('model_moler.h5')
+model = load_model('model_moler_old.h5')
 print("✅ Model .h5 berhasil dimuat!")
 
 # Cek input shape model
